@@ -1,8 +1,10 @@
 #include "mgl.h"
 
+#ifdef MGL_SINGLEDISPLAY
+#define ASSERTDISP()
+
 static int16_t pos_x;
 static int16_t pos_y;
-
 // working area X, Y - start, end
 // end points to the next pixel, that is not affected
 // ex. if we want to edit 4 pixels, then waxs = 10, waxe = 14 (not 13)
@@ -10,113 +12,143 @@ static uint16_t waxs;
 static uint16_t waxe;
 static uint16_t ways;
 static uint16_t waye;
-
 static const MglFont* font;
 static MglAlignEn walign;
-
-#ifdef MGL_SINGLEDISPLAY
-static const MglDisplay* const disp = MGL_SINGLEDISPLAY;
-#else
-static const MglDisplay* disp = 0;
-#endif
 static MglColor color_back;
+void mglDispSetZone(const uint16_t wax, const uint16_t way, const uint16_t wax_size, const uint16_t way_size);
+void mglDispPixelOut(MglColor c);
+void mglDispUpdate(void);
+#define POS_X pos_x
+#define POS_Y pos_y
+#define WAXS waxs
+#define WAXE waxe
+#define WAYS ways
+#define WAYE waye
+#define FONTP font
+#define ALIGN walign
+#define COLORBACK color_back
+#define SIZE_X (DISPLAY_SIZE_X)
+#define SIZE_Y (DISPLAY_SIZE_Y)
+#define SETZONE(x, y, xs, ys) mglDispSetZone(x, y, xs, ys)
+#define PIXELOUT(c) mglDispPixelOut(c)
+#define UPDATE(c) mglDispUpdate(c)
+
+#else // MGL_SINGLEDISPLAY
+static const MglDisplay* disp = 0;
+#define ASSERTDISP() MGL_ASSERT(disp)
+
+#define POS_X (disp->context->pos_x)
+#define POS_Y (disp->context->pos_y)
+#define WAXS (disp->context->waxs)
+#define WAXE (disp->context->waxe)
+#define WAYS (disp->context->ways)
+#define WAYE (disp->context->waye)
+#define FONTP (disp->context->font)
+#define ALIGN (disp->context->walign)
+#define COLORBACK (disp->context->color_back)
+#define SIZE_X (disp->size_x)
+#define SIZE_Y (disp->size_y)
+#define SETZONE(x, y, xs, ys) disp->setZone(x, y, xs, ys)
+#define PIXELOUT(c) disp->pixelOut(c)
+#define UPDATE() disp->update()
+
+#endif // MGL_SINGLEDISPLAY
 
 void mgsWorkingArea(const uint16_t x, const uint16_t y, const uint16_t xsize, const uint16_t ysize)
 {
-    ASSERT(disp);
-    ASSERT((x >= 0) && (y >= 0) && (xsize > 0) && (ysize > 0));
-    if ((x < disp->size_x) && (y < disp->size_y)) {
-        waxs = x;
-        ways = y;
-        waxe = x + xsize;
-        waye = y + ysize;
-        if (waxe > disp->size_x) {
-            ASSERT(0);
-            waxe = disp->size_x;
+    ASSERTDISP();
+    MGL_ASSERT((x >= 0) && (y >= 0) && (xsize > 0) && (ysize > 0));
+    if ((x < SIZE_X) && (y < SIZE_Y)) {
+        WAXS = x;
+        WAYS = y;
+        WAXE = x + xsize;
+        WAYE = y + ysize;
+        if (WAXE > SIZE_X) {
+            MGL_ASSERT(0);
+            WAXE = SIZE_X;
         }
-        if (waye > disp->size_y) {
-            ASSERT(0);
-            waye = disp->size_y;
+        if (WAYE > SIZE_Y) {
+            MGL_ASSERT(0);
+            WAYE = SIZE_Y;
         }
-        pos_x = x;
-        pos_y = y;
+        POS_X = x;
+        POS_Y = y;
     } else {
-        ASSERT(0);
-        waxs = 0;
-        waxe = 0;
-        ways = 0;
-        waye = 0;
+        MGL_ASSERT(0);
+        WAXS = 0;
+        WAXE = 0;
+        WAYS = 0;
+        WAYE = 0;
     }
 }
 
 void mgsCursorAbs(const int16_t x, const int16_t y)
 {
-    pos_x = x;
-    pos_y = y;
+    POS_X = x;
+    POS_Y = y;
 }
 
 void mgsCursorRel(const int16_t x, const int16_t y)
 {
-    pos_x += x;
-    pos_y += y;
+    POS_X += x;
+    POS_Y += y;
 }
 
 void mgsFont(const MglFont* f)
 {
-    font = f;
+    FONTP = f;
 }
 
 void mgsAlign(MglAlignEn align)
 {
-    walign = align;
+    ALIGN = align;
 }
 
-void mgsDisplayUpdate(const MglDisplay* d)
+void mgsDisplayUpdate()
 {
-    d->update();
+    ASSERTDISP();
+    UPDATE();
 }
 
+#ifndef MGL_SINGLEDISPLAY
 void mgsDisplay(const MglDisplay* d)
 {
-#ifdef MGL_SINGLEDISPLAY
-    ASSERT(0);
-#else
     disp = d;
-    mgsWorkingArea(0, 0, disp->size_x, disp->size_y);
-#endif
+    mgsWorkingArea(0, 0, SIZE_X, SIZE_Y);
 }
+#endif // MGL_SINGLEDISPLAY
 
 void mgsBackColor(MglColor color)
 {
-    color_back = color;
+    COLORBACK = color;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 
 void mgdFill(MglColor color)
 {
-    ASSERT(disp);
-    uint16_t xsize = waxe - waxs;
-    uint16_t ysize = waye - ways;
-    disp->setZone(waxs, ways, xsize, ysize);
+    ASSERTDISP();
+    uint16_t xsize = WAXE - WAXS;
+    uint16_t ysize = WAYE - WAYS;
+    SETZONE(WAXS, WAYS, xsize, ysize);
     uint32_t pixels = xsize * ysize;
     for (uint32_t i = 0; i < pixels; i++)
-        disp->pixelOut(color);
+        PIXELOUT(color);
 }
 
 void mgdFillPattern(const uint8_t* bitmap, const uint8_t pixmod, MglColor color)
 {
-    ASSERT(disp);
+    ASSERTDISP();
     uint8_t bmppos = 0;
-    uint16_t xsize = waxe - waxs;
-    uint16_t ysize = waye - ways;
-    disp->setZone(waxs, ways, xsize, ysize);
+    uint16_t xsize = WAXE - WAXS;
+    uint16_t ysize = WAYE - WAYS;
+    SETZONE(WAXS, WAYS, xsize, ysize);
     uint32_t pixels = xsize * ysize;
     for (uint32_t i = 0; i < pixels; i++) {
         if (bitmap[bmppos >> 3] & (1 << (bmppos & 7)))
-            disp->pixelOut(color);
+            PIXELOUT(color);
         else
-            disp->pixelOut(color_back);
+            PIXELOUT(COLORBACK);
         bmppos++;
         if (bmppos == pixmod)
             bmppos = 0;
@@ -125,24 +157,24 @@ void mgdFillPattern(const uint8_t* bitmap, const uint8_t pixmod, MglColor color)
 
 void mgdBitmap(const void* bitmap, const uint8_t bmpsize, const uint8_t width, const uint8_t height, MglColor color)
 {
-    ASSERT(disp);
-    uint16_t xstart = pos_x;
-    uint16_t xend = pos_x + width;
-    uint16_t ystart = pos_y;
-    uint16_t yend = pos_y + height;
-    if (xstart < waxs)
-        xstart = waxs;
-    if (xend > waxe)
-        xend = waxe;
-    if (ystart < ways)
-        ystart = ways;
-    if (yend > waye)
-        yend = waye;
+    ASSERTDISP();
+    uint16_t xstart = POS_X;
+    uint16_t xend = POS_X + width;
+    uint16_t ystart = POS_Y;
+    uint16_t yend = POS_Y + height;
+    if (xstart < WAXS)
+        xstart = WAXS;
+    if (xend > WAXE)
+        xend = WAXE;
+    if (ystart < WAYS)
+        ystart = WAYS;
+    if (yend > WAYE)
+        yend = WAYE;
     if ((xstart < xend) && (ystart < yend)) {
-        disp->setZone(xstart, ystart, xend - xstart, yend - ystart);
+        SETZONE(xstart, ystart, xend - xstart, yend - ystart);
         for (uint16_t iy = ystart; iy < yend; iy++) {
             uint32_t bmpline; // left aligned line
-            uint16_t bmppos = iy - pos_y;
+            uint16_t bmppos = iy - POS_Y;
             if (bmpsize > 8) {
                 if (bmpsize > 16)
                     bmpline = ((uint32_t*)bitmap)[bmppos];
@@ -151,36 +183,36 @@ void mgdBitmap(const void* bitmap, const uint8_t bmpsize, const uint8_t width, c
             } else
                 bmpline = ((uint8_t*)bitmap)[bmppos] << 24;
             for (uint16_t ix = xstart; ix < xend; ix++) {
-                uint16_t pixoff = ix - pos_x;
+                uint16_t pixoff = ix - POS_X;
                 if (pixoff < bmpsize)
-                    disp->pixelOut((bmpline >> (31 - pixoff)) & 0x1 ? color : color_back);
-                // disp->pixelOut((bmpline >> pixoff) & 0x1 ? color : color_back);
+                    PIXELOUT((bmpline >> (31 - pixoff)) & 0x1 ? color : COLORBACK);
+                // PIXELOUT((bmpline >> pixoff) & 0x1 ? color : COLORBACK);
                 else
-                    disp->pixelOut(color_back);
+                    PIXELOUT(COLORBACK);
             }
         }
     }
-    pos_x += width;
+    POS_X += width;
 }
 
 void mgdChar(const char c, MglColor color)
 {
-    ASSERT(disp);
-    ASSERT(font);
-    uint8_t charpos = c - font->startchar;
-    uint8_t width = font->symbol_width[charpos];
-    uint8_t height = font->bmp_height;
+    ASSERTDISP();
+    MGL_ASSERT(FONTP);
+    uint8_t charpos = c - FONTP->startchar;
+    uint8_t width = FONTP->symbol_width ? FONTP->symbol_width[charpos] : FONTP->bmp_width;
+    uint8_t height = FONTP->bmp_height;
     uint8_t bmpmul;
-    if (font->bmp_width > 8) {
-        if (font->bmp_width > 16)
+    if (FONTP->bmp_width > 8) {
+        if (FONTP->bmp_width > 16)
             bmpmul = 4;
         else
             bmpmul = 2;
     } else {
         bmpmul = 1;
     }
-    const void* bitmap = font->bitmap_data_horiz + charpos * font->bmp_height * bmpmul;
-    mgdBitmap(bitmap, font->bmp_width, width, height, color);
+    const void* bitmap = (uint8_t*)FONTP->bitmap_data_horiz + charpos * FONTP->bmp_height * bmpmul;
+    mgdBitmap(bitmap, FONTP->bmp_width, width, height, color);
 }
 
 void mgdString(const char* str, MglColor color)
@@ -194,11 +226,11 @@ void mgdString(const char* str, MglColor color)
 
 uint16_t mgStringLengthGet(const char* str)
 {
-    ASSERT(font);
+    MGL_ASSERT(FONTP);
     uint16_t strlength = 0;
     while (*str) {
-        uint8_t c = *str - font->startchar;
-        strlength += font->symbol_width[c];
+        uint8_t c = *str - FONTP->startchar;
+        strlength += FONTP->symbol_width ? FONTP->symbol_width[c] : FONTP->bmp_width;
         str++;
     }
     return strlength;
@@ -206,73 +238,73 @@ uint16_t mgStringLengthGet(const char* str)
 
 void mgdStringLine(const char* str, MglColor color)
 {
-    ASSERT(disp);
-    ASSERT(font);
+    ASSERTDISP();
+    MGL_ASSERT(FONTP);
     int16_t text_start;
-    int16_t pos_x_buf = pos_x;
-    uint8_t height = font->bmp_height;
-    switch (walign) {
+    int16_t pos_x_buf = POS_X;
+    uint8_t height = FONTP->bmp_height;
+    switch (ALIGN) {
     case MGL_ALIGN_LEFT:
-        text_start = pos_x;
+        text_start = POS_X;
         break;
     case MGL_ALIGN_CENTER:
-        text_start = pos_x - mgStringLengthGet(str) / 2;
+        text_start = POS_X - mgStringLengthGet(str) / 2;
         break;
     case MGL_ALIGN_RIGHT:
-        text_start = pos_x - mgStringLengthGet(str);
+        text_start = POS_X - mgStringLengthGet(str);
         break;
     default:
-        ASSERT(0);
+        MGL_ASSERT(0);
         break;
     }
     // start string
-    if (MGL_ALIGN_LEFT != walign) {
-        int xstart = waxs;
+    if (MGL_ALIGN_LEFT != ALIGN) {
+        int xstart = WAXS;
         int xend = text_start;
-        int ystart = pos_y;
-        int yend = pos_y + height;
-        if (xend > waxe)
-            xend = waxe;
-        if (ystart < ways)
-            ystart = ways;
-        if (yend > waye)
-            yend = waye;
+        int ystart = POS_Y;
+        int yend = POS_Y + height;
+        if (xend > WAXE)
+            xend = WAXE;
+        if (ystart < WAYS)
+            ystart = WAYS;
+        if (yend > WAYE)
+            yend = WAYE;
         if ((xstart < xend) && (ystart < yend)) {
             uint16_t xsize = xend - xstart;
             uint16_t ysize = yend - ystart;
             uint32_t pixels = xsize * ysize;
-            disp->setZone(xstart, ystart, xsize, ysize);
+            SETZONE(xstart, ystart, xsize, ysize);
             for (uint32_t i = 0; i < pixels; i++)
-                disp->pixelOut(color_back);
+                PIXELOUT(COLORBACK);
         }
     }
     // print string
-    pos_x = text_start;
+    POS_X = text_start;
     mgdString(str, color);
     // finalize string
-    if (MGL_ALIGN_RIGHT != walign) {
-        int xstart = pos_x;
-        int xend = waxe;
-        int ystart = pos_y;
-        int yend = pos_y + height;
-        if (xstart < waxs)
-            xstart = waxs;
-        if (ystart < ways)
-            ystart = ways;
-        if (yend > waye)
-            yend = waye;
+    if (MGL_ALIGN_RIGHT != ALIGN) {
+        int xstart = POS_X;
+        int xend = WAXE;
+        int ystart = POS_Y;
+        int yend = POS_Y + height;
+        if (xstart < WAXS)
+            xstart = WAXS;
+        if (ystart < WAYS)
+            ystart = WAYS;
+        if (yend > WAYE)
+            yend = WAYE;
         if ((xstart < xend) && (ystart < yend)) {
             uint16_t xsize = xend - xstart;
             uint16_t ysize = yend - ystart;
             uint32_t pixels = xsize * ysize;
-            disp->setZone(xstart, ystart, xsize, ysize);
+            SETZONE(xstart, ystart, xsize, ysize);
             for (uint32_t i = 0; i < pixels; i++)
-                disp->pixelOut(color_back);
+                PIXELOUT(COLORBACK);
         }
     }
     // shift cursor pos
-    pos_x = pos_x_buf;
-    pos_y += height;
+    POS_X = pos_x_buf;
+    POS_Y += height;
 }
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -392,22 +424,22 @@ MglColor mgShine(uint16_t intensity, MglColor highest, MglColor lowest)
 
 void mgdHsvTestFill()
 {
-    ASSERT(disp);
+    ASSERTDISP();
     uint16_t x, y;
     // first
-    disp->setZone(0, 0, disp->size_x, disp->size_y);
-    for (y = 0; y < disp->size_y; y++)
-        for (x = 0; x < disp->size_x; x++)
-            disp->pixelOut(mgColorHsv(x * 256 / disp->size_x, y * 256 / disp->size_y, 128));
+    SETZONE(0, 0, SIZE_X, SIZE_Y);
+    for (y = 0; y < SIZE_Y; y++)
+        for (x = 0; x < SIZE_X; x++)
+            PIXELOUT(mgColorHsv(x * 256 / SIZE_X, y * 256 / SIZE_Y, 128));
 }
 
 void mgdHsvTestFill2()
 {
-    ASSERT(disp);
+    ASSERTDISP();
     uint16_t x, y;
     // second
-    disp->setZone(0, 0, disp->size_x, disp->size_y);
-    for (y = 0; y < disp->size_y; y++)
-        for (x = 0; x < disp->size_x; x++)
-            disp->pixelOut(mgColorHsv(x * 256 / disp->size_x, 255, y * 128 / disp->size_y + 128));
+    SETZONE(0, 0, SIZE_X, SIZE_Y);
+    for (y = 0; y < SIZE_Y; y++)
+        for (x = 0; x < SIZE_X; x++)
+            PIXELOUT(mgColorHsv(x * 256 / SIZE_X, 255, y * 128 / SIZE_Y + 128));
 }
