@@ -40,7 +40,9 @@ __attribute__((weak)) void mglDispPixelOut(MglColor c)
 __attribute__((weak)) void mglDispUpdate() { }
 
 #ifndef MGL_SINGLEDISPLAY
+static MglDispContext context;
 const MglDisplay mgl_display = {
+    .context = &context,
     .size_x = DISPLAY_SIZE_X,
     .size_y = DISPLAY_SIZE_Y,
     .setZone = mglDispSetZone,

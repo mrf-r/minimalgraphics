@@ -84,23 +84,27 @@ void mgsWorkingArea(const uint16_t x, const uint16_t y, const uint16_t xsize, co
 
 void mgsCursorAbs(const int16_t x, const int16_t y)
 {
+    ASSERTDISP();
     POS_X = x;
     POS_Y = y;
 }
 
 void mgsCursorRel(const int16_t x, const int16_t y)
 {
+    ASSERTDISP();
     POS_X += x;
     POS_Y += y;
 }
 
 void mgsFont(const MglFont* f)
 {
+    ASSERTDISP();
     FONTP = f;
 }
 
 void mgsAlign(MglAlignEn align)
 {
+    ASSERTDISP();
     ALIGN = align;
 }
 
@@ -114,12 +118,18 @@ void mgsDisplayUpdate()
 void mgsDisplay(const MglDisplay* d)
 {
     disp = d;
+    ASSERT(d->context);
+    ASSERT(d->size_x);
+    ASSERT(d->size_y);
+    ASSERT(d->setZone);
+    ASSERT(d->pixelOut);
     mgsWorkingArea(0, 0, SIZE_X, SIZE_Y);
 }
 #endif // MGL_SINGLEDISPLAY
 
 void mgsBackColor(MglColor color)
 {
+    ASSERTDISP();
     COLORBACK = color;
 }
 
@@ -226,6 +236,7 @@ void mgdString(const char* str, MglColor color)
 
 uint16_t mgStringLengthGet(const char* str)
 {
+    ASSERTDISP();
     MGL_ASSERT(FONTP);
     uint16_t strlength = 0;
     while (*str) {

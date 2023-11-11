@@ -27,5 +27,9 @@ create `MglDisplay` object for your display
 - cursor/wa context for multiple displays ?
 - multiple types of colors ??
 - FONTS!!! add more and probably adopt this lib to common free fonts
+    - https://www.pentacom.jp/
+        - import, export, py json?
+    - for some reason my fonts are big endian - convert to LE?
+    - clean - check if all of them are ok and delete if not, get others from hdd ?
 - lines and circles ??
 
