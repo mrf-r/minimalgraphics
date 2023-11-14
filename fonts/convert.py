@@ -6,15 +6,23 @@ import json
 import sys
 import os
 
-os.get
+FIRSTCHAR = 0x20
+LASTCHAR = 0x80 # last will be 0x7F
 
-for arg in sys.argv:
-    print(f'processing {arg}...')
-    fontsrc = json.load(arg)
+print(os.getcwd())
+
+arg = sys.argv[1]
+if arg[:2] == "./" or arg[:2] == ".\\" : arg = arg[2:]
+print(f'processing {arg}...')
+
+with open(arg) as jf:
+    fontsrc = json.load(jf)
     fontdst = {}
+    name = "".join([c for c in arg.split('.')[0] if c.isalpha() or c.isdigit()]) # sorry
+    print(f'name: {name}')
     # 1 - normalize charcount to basic ascii
     blank_chars = 0
-    for chn in range(0x20, 0x7F):
+    for chn in range(FIRSTCHAR, LASTCHAR):
         if str(chn) in fontsrc:
             # glyph is present, load it and print
             fontdst.update({str(chn): fontsrc[str(chn)]})
@@ -30,9 +38,10 @@ for arg in sys.argv:
     top = 16
     bottom = 0
     charwidth = {}
-    for chn in range(0x20, 0x7F):
+    for chn in range(FIRSTCHAR, LASTCHAR):
         glyph = fontdst[str(chn)]
         minpass = False
+        mw = 0
         for i, lin in enumerate(glyph):
             if lin != 0:
                 # bot
@@ -47,12 +56,70 @@ for arg in sys.argv:
                 # right
                 mr = 16 - f'{lin:016b}'.index('1')
                 if mr > right: right = mr
-                charwidth.update({str(chn): mr})
-    print(f'width  : {left} - {right} : {right - left}')
-    print(f'height : {top} - {bottom} : {bottom - top}')
+                if mr > mw: mw = mr
+        charwidth.update({str(chn): mw})
+    bottom += 1
+    width = right - left
+    height = bottom - top
+    print(f'width  : {left} - {right} : {width}')
+    print(f'height : {top} - {bottom} : {height}')
+
+    # find whitespace
+    ws = 0
+    for w in charwidth:
+        ws += charwidth[w]
+    ws /= len(charwidth)
+    ws = int(ws / 2 + 1)
+    print(f'whitespace width: {ws}')
+    ws = ws + left - 1
+    print(f'whitespace normalized: {ws}')
+    charwidth.update({'32': ws})
+
     # 3 - save the new file
-    f = open(f'{arg}.h', 'w')
-    f.write('#ifndef ')
-    for chn in range(0x20, 0x7F):
+    f = open(f'{name}.c', 'w')
+    # f.write(f'#ifndef _{name.upper()}_H\n')
+    # f.write(f'#define _{name.upper()}_H\n')
+    # f.write(f'\n')
+    f.write(f'#include "mgl.h"\n')
+    f.write(f'\n')
+    # print(fontdst)
+    # print(charwidth)
+
+    # write glyph array
+    f.write(f'static const {"uint16_t" if width > 8 else "uint8_t"} _{name}_glyphs[{(LASTCHAR - FIRSTCHAR) * height}] =\n')
+    f.write('{\n')
+    for chn in range(FIRSTCHAR, LASTCHAR):
+        f.write(f'    ')
         glyph = fontdst[str(chn)]
-        nglyph = glyph
+        for lin in range(height):
+            if width > 8:
+                f.write(f'0x{glyph[lin + top]>>left:04X}, ')
+            else:
+                f.write(f'0x{glyph[lin + top]>>left:02X}, ')
+        f.write(f'// {chn:02X} "{chr(chn)}"\n')
+    f.write('};\n')
+
+    f.write(f'\n')
+    # write width array
+    f.write(f'static const uint8_t _{name}_width[{LASTCHAR - FIRSTCHAR}] =\n')
+    f.write('{\n')
+    for chn in range(FIRSTCHAR, LASTCHAR):
+        w = charwidth[str(chn)] - left + 1
+        if w < 0: w = 0
+        f.write(f'    0x{w:02X}, // {chn:02X} "{chr(chn)}"\n')
+    f.write('};\n')
+
+    f.write(f'\n')
+    # write struct
+    f.write(f'const MglFont _{name} =\n')
+    f.write('{\n')
+    f.write(f'    .bitmap_data_horiz = (void*)_{name}_glyphs,\n')
+    f.write(f'    .symbol_width = _{name}_width,\n')
+    f.write(f'    .bmp_width = {width},\n')
+    f.write(f'    .bmp_height = {height},\n')
+    f.write(f'    .startchar = {FIRSTCHAR},\n')
+    f.write('};\n')
+
+    f.write('\n')
+    # f.write(f'#endif // _{name.upper()}_H\n')
+    f.close()

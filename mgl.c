@@ -118,11 +118,11 @@ void mgsDisplayUpdate()
 void mgsDisplay(const MglDisplay* d)
 {
     disp = d;
-    ASSERT(d->context);
-    ASSERT(d->size_x);
-    ASSERT(d->size_y);
-    ASSERT(d->setZone);
-    ASSERT(d->pixelOut);
+    MGL_ASSERT(d->context);
+    MGL_ASSERT(d->size_x);
+    MGL_ASSERT(d->size_y);
+    MGL_ASSERT(d->setZone);
+    MGL_ASSERT(d->pixelOut);
     mgsWorkingArea(0, 0, SIZE_X, SIZE_Y);
 }
 #endif // MGL_SINGLEDISPLAY
@@ -185,6 +185,7 @@ void mgdBitmap(const void* bitmap, const uint8_t bmpsize, const uint8_t width, c
         for (uint16_t iy = ystart; iy < yend; iy++) {
             uint32_t bmpline; // left aligned line
             uint16_t bmppos = iy - POS_Y;
+#ifdef MGL_BITMAPMIRRORED // compatibility, to be deleted
             if (bmpsize > 8) {
                 if (bmpsize > 16)
                     bmpline = ((uint32_t*)bitmap)[bmppos];
@@ -196,9 +197,23 @@ void mgdBitmap(const void* bitmap, const uint8_t bmpsize, const uint8_t width, c
                 uint16_t pixoff = ix - POS_X;
                 if (pixoff < bmpsize)
                     PIXELOUT((bmpline >> (31 - pixoff)) & 0x1 ? color : COLORBACK);
-                // PIXELOUT((bmpline >> pixoff) & 0x1 ? color : COLORBACK);
                 else
                     PIXELOUT(COLORBACK);
+#else // MGL_BITMAPMIRRORED
+            if (bmpsize > 8) {
+                if (bmpsize > 16)
+                    bmpline = ((uint32_t*)bitmap)[bmppos];
+                else
+                    bmpline = ((uint16_t*)bitmap)[bmppos];
+            } else
+                bmpline = ((uint8_t*)bitmap)[bmppos];
+            for (uint16_t ix = xstart; ix < xend; ix++) {
+                uint16_t pixoff = ix - POS_X;
+                if (pixoff < bmpsize)
+                    PIXELOUT((bmpline >> pixoff) & 0x1 ? color : COLORBACK);
+                else
+                    PIXELOUT(COLORBACK);
+#endif // MGL_BITMAPMIRRORED
             }
         }
     }
@@ -210,7 +225,7 @@ void mgdChar(const char c, MglColor color)
     ASSERTDISP();
     MGL_ASSERT(FONTP);
     uint8_t charpos = c - FONTP->startchar;
-    uint8_t width = FONTP->symbol_width ? FONTP->symbol_width[charpos] : FONTP->bmp_width;
+    uint8_t width = FONTP->symbol_width ? FONTP->symbol_width[charpos] : FONTP->bmp_width + 1;
     uint8_t height = FONTP->bmp_height;
     uint8_t bmpmul;
     if (FONTP->bmp_width > 8) {
@@ -241,7 +256,7 @@ uint16_t mgStringLengthGet(const char* str)
     uint16_t strlength = 0;
     while (*str) {
         uint8_t c = *str - FONTP->startchar;
-        strlength += FONTP->symbol_width ? FONTP->symbol_width[c] : FONTP->bmp_width;
+        strlength += FONTP->symbol_width ? FONTP->symbol_width[c] : FONTP->bmp_width + 1;
         str++;
     }
     return strlength;
