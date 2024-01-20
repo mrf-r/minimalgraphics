@@ -266,7 +266,7 @@ void mgdStringLine(const char* str, MglColor color)
 {
     ASSERTDISP();
     MGL_ASSERT(FONTP);
-    int16_t text_start;
+    int16_t text_start = POS_X;
     int16_t pos_x_buf = POS_X;
     uint8_t height = FONTP->bmp_height;
     switch (ALIGN) {
@@ -424,27 +424,12 @@ MglColor mgColorHsv(uint8_t hue, uint8_t saturation, uint8_t value)
     return c;
 }
 
-MglColor mgAlphablend(uint16_t intensity, MglColor lowest, MglColor highest)
+MglColor mgAlphablend(uint8_t intensity, MglColor lowest, MglColor highest)
 {
     MglColor r;
-    int32_t ca = ((highest.red - lowest.red) * intensity) / 65536 + lowest.red;
-    r.red = ca;
-    ca = ((highest.green - lowest.green) * intensity) / 65536 + lowest.green;
-    r.green = ca;
-    ca = ((highest.blue - lowest.blue) * intensity) / 65536 + lowest.blue;
-    r.blue = ca;
-    return r;
-}
-
-MglColor mgShine(uint16_t intensity, MglColor highest, MglColor lowest)
-{
-    MglColor r;
-    int32_t ca = highest.red + lowest.red * intensity / 65536;
-    r.red = ca > 255 ? 255 : ca;
-    ca = highest.green + lowest.green * intensity / 65536;
-    r.green = ca > 255 ? 255 : ca;
-    ca = highest.blue + lowest.blue * intensity / 65536;
-    r.blue = ca > 255 ? 255 : ca;
+    r.red = ((int32_t)(highest.red - lowest.red) * intensity) / 256 + lowest.red;
+    r.green = ((int32_t)(highest.green - lowest.green) * intensity) / 256 + lowest.green;
+    r.blue = ((int32_t)(highest.blue - lowest.blue) * intensity) / 256 + lowest.blue;
     return r;
 }
 

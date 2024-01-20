@@ -25,7 +25,7 @@ typedef union {
 
 static const MglColor COLOR_OFF = {.wrd = 0};
 static const MglColor COLOR_ON = {.wrd = 1};
-static const MglColor COLOR_INVERT = {.wrd = 1};
+static const MglColor COLOR_INVERT = {.wrd = 65536};
 
 typedef enum {
     MGL_ALIGN_LEFT = 0,
@@ -95,8 +95,7 @@ void mgdHex16(uint16_t v, MglColor color);
 /////////////////////////////////////////////////////////////////////////////////
 MglColor mgColorRgb(uint8_t red, uint8_t green, uint8_t blue);
 MglColor mgColorHsv(uint8_t hue, uint8_t saturation, uint8_t value);
-MglColor mgAlphablend(uint16_t intensity, MglColor lowest, MglColor highest);
-MglColor mgShine(uint16_t intensity, MglColor highest, MglColor lowest);
+MglColor mgAlphablend(uint8_t intensity, MglColor lowest, MglColor highest);
 void mgdHsvTestFill();
 void mgdHsvTestFill2();
 
