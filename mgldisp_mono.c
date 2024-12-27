@@ -1,5 +1,7 @@
 #include "mgl.h"
 
+// template example of how to use this library with monochrome display
+
 uint8_t mgl_framebuffer[DISPLAY_SIZE_X * DISPLAY_SIZE_Y / 8];
 static uint16_t fwaxs;
 static uint16_t fways;
@@ -37,7 +39,9 @@ __attribute__((weak)) void mglDispPixelOut(MglColor c)
     }
 }
 
-__attribute__((weak)) void mglDispUpdate() { }
+__attribute__((weak)) void mglDispUpdate() {
+    // copy framebuffer to the display RAM if it is not updated periodically
+}
 
 #ifndef MGL_SINGLEDISPLAY
 static MglDispContext context;
