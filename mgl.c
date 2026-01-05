@@ -57,7 +57,7 @@ static const MglDisplay* disp = 0;
 void mgsWorkingArea(const uint16_t x, const uint16_t y, const uint16_t xsize, const uint16_t ysize)
 {
     ASSERTDISP();
-    MGL_ASSERT((x >= 0) && (y >= 0) && (xsize > 0) && (ysize > 0));
+    MGL_ASSERT((xsize > 0) && (ysize > 0));
     if ((x < SIZE_X) && (y < SIZE_Y)) {
         WAXS = x;
         WAYS = y;
