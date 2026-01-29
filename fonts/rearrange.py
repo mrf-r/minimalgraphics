@@ -98,25 +98,28 @@ a = (
     0x02, 0x01, 0x03, 0x02, 0x01, 0x00, 0x00, 0x00,
     0x1e, 0x1e, 0x1e, 0x1e, 0x00, 0x00, 0x00, 0x00
 )
-    
 
-font = {}
-OFFSET_Y = 12 - 5
-OFFSET_X = 2
+START_CHAR = 0x20
 BMPSIZE = 8
+END_CHAR = int(len(a) / BMPSIZE + START_CHAR)
 VERTICAL = 1
 
-for c in range(0x20,0x80):
-    bmp = a[(c - 0x20) * BMPSIZE : (c - 0x20 + 1) * BMPSIZE]
-    gl = [0] * 16
+OFFSET_Y = 1
+OFFSET_X = 1
+
+font = {}
+for c in range(START_CHAR, END_CHAR):
+    bmp = a[(c - START_CHAR) * BMPSIZE : (c - START_CHAR + 1) * BMPSIZE] # array for only one glyph
+    gl = [0] * 16 if BMPSIZE < 16 else BMPSIZE # pentacom doesn't like glyphs < 16
+    glzero = gl.copy()
     for y in range(BMPSIZE):
         for x in range(BMPSIZE):
-            if y + OFFSET_Y < 16 and x + OFFSET_X < 16:
-                if VERTICAL == 1:
-                    gl[y + OFFSET_Y] |= (1 << x + OFFSET_X) if bmp[x] & (1 << y) else 0
-                else:
-                    gl[y + OFFSET_Y] |= (1 << x + OFFSET_X) if bmp[y] & (1 << BMPSIZE - x - 1) else 0
-    if gl != [0] * 16:
+            # if y + OFFSET_Y < 16 and x + OFFSET_X < 16:
+            if VERTICAL == 1:
+                gl[y + OFFSET_Y] |= (1 << x + OFFSET_X) if bmp[x] & (1 << y) else 0
+            else:
+                gl[y + OFFSET_Y] |= (1 << x + OFFSET_X) if bmp[y] & (1 << BMPSIZE - x) else 0
+    if gl != glzero:
         font.update({str(c): gl})
 
 print(str(font).replace("'", '"'))

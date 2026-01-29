@@ -6,9 +6,6 @@ import json
 import sys
 import os
 
-FIRSTCHAR = 0x20
-LASTCHAR = 0x80 # last will be 0x7F
-
 print(os.getcwd())
 
 arg = sys.argv[1]
@@ -20,9 +17,18 @@ with open(arg) as jf:
     fontdst = {}
     name = "".join([c for c in arg.split('.')[0] if c.isalpha() or c.isdigit()]) # sorry
     print(f'name: {name}')
+    # 0 - determine first and last chars
+    firstchar = 255
+    lastchar = 0
+    for c in fontsrc:
+        chnum = int(c)
+        if chnum > lastchar: lastchar = chnum
+        if chnum < firstchar: firstchar = chnum
+    print(f'firstchar: {firstchar}')
+    print(f'lastchar: {lastchar}')
     # 1 - normalize charcount to basic ascii
     blank_chars = 0
-    for chn in range(FIRSTCHAR, LASTCHAR):
+    for chn in range(firstchar, lastchar):
         if str(chn) in fontsrc:
             # glyph is present, load it and print
             fontdst.update({str(chn): fontsrc[str(chn)]})
@@ -38,7 +44,7 @@ with open(arg) as jf:
     top = 16
     bottom = 0
     charwidth = {}
-    for chn in range(FIRSTCHAR, LASTCHAR):
+    for chn in range(firstchar, lastchar):
         glyph = fontdst[str(chn)]
         minpass = False
         mw = 0
@@ -77,18 +83,13 @@ with open(arg) as jf:
 
     # 3 - save the new file
     f = open(f'{name}.c', 'w')
-    # f.write(f'#ifndef _{name.upper()}_H\n')
-    # f.write(f'#define _{name.upper()}_H\n')
-    # f.write(f'\n')
     f.write(f'#include "mgl.h"\n')
     f.write(f'\n')
-    # print(fontdst)
-    # print(charwidth)
 
     # write glyph array
-    f.write(f'static const {"uint16_t" if width > 8 else "uint8_t"} _{name}_glyphs[{(LASTCHAR - FIRSTCHAR) * height}] =\n')
+    f.write(f'static const {"uint16_t" if width > 8 else "uint8_t"} _{name}_glyphs[{(lastchar - firstchar) * height}] =\n')
     f.write('{\n')
-    for chn in range(FIRSTCHAR, LASTCHAR):
+    for chn in range(firstchar, lastchar):
         f.write(f'    ')
         glyph = fontdst[str(chn)]
         for lin in range(height):
@@ -96,17 +97,23 @@ with open(arg) as jf:
                 f.write(f'0x{glyph[lin + top]>>left:04X}, ')
             else:
                 f.write(f'0x{glyph[lin + top]>>left:02X}, ')
-        f.write(f'// {chn:02X} "{chr(chn)}"\n')
+        if chn < 0x80:
+            f.write(f'// {chn:02X} "{chr(chn)}"\n')
+        else:
+            f.write(f'// {chn:02X}"\n')
     f.write('};\n')
 
     f.write(f'\n')
     # write width array
-    f.write(f'static const uint8_t _{name}_width[{LASTCHAR - FIRSTCHAR}] =\n')
+    f.write(f'static const uint8_t _{name}_width[{lastchar - firstchar}] =\n')
     f.write('{\n')
-    for chn in range(FIRSTCHAR, LASTCHAR):
+    for chn in range(firstchar, lastchar):
         w = charwidth[str(chn)] - left + 1
         if w < 0: w = 0
-        f.write(f'    0x{w:02X}, // {chn:02X} "{chr(chn)}"\n')
+        if chn < 0x80:
+            f.write(f'    0x{w:02X}, // {chn:02X} "{chr(chn)}"\n')
+        else:
+            f.write(f'    0x{w:02X}, // {chn:02X}"\n')
     f.write('};\n')
 
     f.write(f'\n')
@@ -117,9 +124,10 @@ with open(arg) as jf:
     f.write(f'    .symbol_width = _{name}_width,\n')
     f.write(f'    .bmp_width = {width},\n')
     f.write(f'    .bmp_height = {height},\n')
-    f.write(f'    .startchar = {FIRSTCHAR},\n')
+    f.write(f'    .startchar = {firstchar},\n')
     f.write('};\n')
 
     f.write('\n')
     # f.write(f'#endif // _{name.upper()}_H\n')
     f.close()
+    # '''
