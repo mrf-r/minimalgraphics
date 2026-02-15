@@ -107,4 +107,5 @@ const MglFont _5x7mod =
     .bmp_width = 5,
     .bmp_height = 7,
     .startchar = 32,
+    .endchar = 128,
 };

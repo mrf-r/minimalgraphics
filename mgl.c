@@ -1,3 +1,23 @@
+/*
+Copyright (C) 2026 Eugene Chernyh (mrf-r)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
 #include "mgl.h"
 
 #ifdef MGL_SINGLEDISPLAY
@@ -224,20 +244,31 @@ void mgdChar(const char c, MglColor color)
 {
     ASSERTDISP();
     MGL_ASSERT(FONTP);
-    uint8_t charpos = c - FONTP->startchar;
-    uint8_t width = FONTP->symbol_width ? FONTP->symbol_width[charpos] : FONTP->bmp_width + 1;
-    uint8_t height = FONTP->bmp_height;
-    uint8_t bmpmul;
-    if (FONTP->bmp_width > 8) {
-        if (FONTP->bmp_width > 16)
-            bmpmul = 4;
-        else
-            bmpmul = 2;
+#ifndef MGL_CHARSLIMITED
+    if ((c > FONTP->startchar) && (c < FONTP->endchar)) {
+// #else
+//     MGL_ASSERT((c > FONTP->startchar) && (c < FONTP->endchar));
+#endif // MGL_CHARSLIMITED
+        uint8_t charpos = c - FONTP->startchar;
+        uint8_t width = FONTP->symbol_width ? FONTP->symbol_width[charpos] : FONTP->bmp_width + 1;
+        uint8_t height = FONTP->bmp_height;
+        uint8_t bmpmul;
+        if (FONTP->bmp_width > 8) {
+            if (FONTP->bmp_width > 16)
+                bmpmul = 4;
+            else
+                bmpmul = 2;
+        } else {
+            bmpmul = 1;
+        }
+        const void* bitmap = (uint8_t*)FONTP->bitmap_data_horiz + charpos * FONTP->bmp_height * bmpmul;
+        mgdBitmap(bitmap, FONTP->bmp_width, width, height, color);
+#ifndef MGL_CHARSLIMITED
     } else {
-        bmpmul = 1;
+        static const uint8_t bmp[8] = { 0x55, 0xAA, 0x55, 0xAA, 0x55, 0xAA, 0x55, 0xAA };
+        mgdBitmap(&bmp, 8, FONTP->bmp_width < 8 ? FONTP->bmp_width : 8, FONTP->bmp_height < 8 ? FONTP->bmp_height : 8, color);
     }
-    const void* bitmap = (uint8_t*)FONTP->bitmap_data_horiz + charpos * FONTP->bmp_height * bmpmul;
-    mgdBitmap(bitmap, FONTP->bmp_width, width, height, color);
+#endif // MGL_CHARSLIMITED
 }
 
 void mgdString(const char* str, MglColor color)

@@ -20,6 +20,12 @@ __attribute__((weak)) void mglDispSetZone(const uint16_t wax, const uint16_t way
     fx = fwaxs, fy = fways;
 }
 
+/* colors may be defined in mgl_conf.h
+static const MglColor COLOR_OFF = {.wrd = 0};
+static const MglColor COLOR_ON = {.wrd = 1};
+static const MglColor COLOR_INVERT = {.wrd = 65536};
+*/
+
 __attribute__((weak)) void mglDispPixelOut(MglColor c)
 {
     if (c.wrd == COLOR_OFF.wrd)

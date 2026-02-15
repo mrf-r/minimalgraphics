@@ -107,4 +107,5 @@ const MglFont _5monotxt =
     .bmp_width = 5,
     .bmp_height = 5,
     .startchar = 32,
+    .endchar = 128,
 };

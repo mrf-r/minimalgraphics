@@ -17,16 +17,14 @@ Please, provide:
     - `#define MGL_SINGLEDISPLAY` if you don't need multiple
     - `DISPLAY_SIZE_X` `DISPLAY_SIZE_Y` for default single display implementation
 - display low level driver file (like `mgldisp_color.c`)
-    - `setZone` is the command for limiting the canvas. pixels expected sequence is left->right, top->bottom. This command has hardware analog on most tft controllers, so you need to translate it to one SPI/IIC request. In case of monocrome lcd, same behavior is emulates for framebuffer.
-    - `pixelOut` should write one pixel - one SPI/IIC transaction for most color screens
+    - `setZone` is the command for limiting the canvas. pixels expected sequence is left->right, top->bottom. This command has hardware analog on most tft controllers, so you need to translate it to one SPI/IIC request. In case of monocrome lcd, same behavior should be emulates for framebuffer.
+    - `pixelOut` should write one pixel - one SPI/IIC transaction for most color screens, or single bit for monochrome framebuffer. Dithering may be used for 565 or other low-depth panels.
     - `update` is just a wrapper, it may be used for triggering local framebuffer to panel transfer in case this process is application-driven
     - for multimple displays you need to create `MglDisplay` struct for each
 - your own fonts files
-    - you can use https://www.pentacom.jp/pentacom/bitfontmaker2 for font editing. use `python3 convert.py fontname.json` for export to `fontname.c` file.
-    - `rearrange.py` might be helpful to convert existing fonts to bitfontmaker2 format (manual tuning needed, paste array to file)
+    - `fonts/conv.py` can be used in interactive mode to convert fonts from raw arrays or json, image preview, and export .c files
+    - https://www.pentacom.jp/pentacom/bitfontmaker2 can be used for json editing
 
 ## TODO
 
 - do we really need lines and circles?
-- more fonts is always better!)
-- convert.py save font image

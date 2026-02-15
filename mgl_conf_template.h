@@ -11,6 +11,11 @@
 #define MGL_SINGLEDISPLAY
 // #define MGL_BITMAPMIRRORED // deprecated, will be deleted
 
+// colors for monochrome
+#define COLOR_OFF ((MglColor){.wrd=0x0})
+#define COLOR_ON ((MglColor){.wrd=0x1})
+#define COLOR_INVERT ((MglColor){.wrd=0x1000})
+
 #define DISPLAY_SIZE_X 128
 #define DISPLAY_SIZE_Y 64
 
