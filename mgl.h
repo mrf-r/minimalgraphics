@@ -43,8 +43,6 @@ typedef union {
 } MglColor;
 // #pragma GCC diagnostic pop
 
-#define COLOR_OFF ((MglColor)0x0)
-
 typedef enum {
     MGL_ALIGN_LEFT = 0,
     MGL_ALIGN_CENTER,
