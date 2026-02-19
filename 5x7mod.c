@@ -102,7 +102,7 @@ static const uint8_t _5x7mod_glyphs[672] =
 
 const MglFont _5x7mod =
 {
-    .bitmap_data_horiz = (void*)_5x7mod_glyphs,
+    .bitmap_data = (void*)_5x7mod_glyphs,
     .symbol_width = 0,
     .bmp_width = 5,
     .bmp_height = 7,

@@ -262,7 +262,7 @@ class FontProc:
         # write struct
         f.write(f'const MglFont font_{name} =\n')
         f.write('{\n')
-        f.write(f'    .bitmap_data_horiz = (void*)_{name}_glyphs,\n')
+        f.write(f'    .bitmap_data = (void*)_{name}_glyphs,\n')
         f.write(f'    .symbol_width = _{name}_width,\n')
         f.write(f'    .bmp_width = {self.bmpwidth},\n')
         f.write(f'    .bmp_height = {self.bmpheight},\n')

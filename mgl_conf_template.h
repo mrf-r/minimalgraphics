@@ -9,7 +9,6 @@
 #endif
 
 #define MGL_SINGLEDISPLAY
-// #define MGL_BITMAPMIRRORED // deprecated, will be deleted
 
 // colors for monochrome
 #define COLOR_OFF ((MglColor){.wrd=0x0})

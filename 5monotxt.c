@@ -102,7 +102,7 @@ static const uint8_t _5monotxt_glyphs[480] =
 
 const MglFont _5monotxt =
 {
-    .bitmap_data_horiz = (void*)_5monotxt_glyphs,
+    .bitmap_data = (void*)_5monotxt_glyphs,
     .symbol_width = 0,
     .bmp_width = 5,
     .bmp_height = 5,

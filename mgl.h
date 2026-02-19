@@ -51,11 +51,10 @@ typedef enum {
 
 typedef const struct
 {
-    const void* bitmap_data_horiz; // horizontal fill one pixel
-    // void* bitmap_data_vert; // horizontal fill vertical line of 8 pixels
+    const void* bitmap_data; // horizontal fill one pixel
     const uint8_t* symbol_width; // char width array (if 0 then monospaced)
-    uint8_t bmp_width; // number of vertical bytes/words / horizontal type (byte/halfword/word)
-    uint8_t bmp_height; // number of horizontal bytes/words / vertical type
+    uint8_t bmp_width; // also used to determine bitmap_data type
+    uint8_t bmp_height;
     uint8_t startchar; // usually 0x20
     uint8_t endchar; // usually 0x80
 } MglFont;
@@ -85,17 +84,18 @@ typedef const struct
 } MglDisplay;
 #endif // MGL_SINGLEDISPLAY
 
+// s - set
 void mgsWorkingArea(const uint16_t x, const uint16_t y, const uint16_t xsize, const uint16_t ysize);
 void mgsCursorAbs(const int16_t x, const int16_t y);
 void mgsCursorRel(const int16_t x, const int16_t y);
 void mgsFont(const MglFont* f);
 void mgsAlign(MglAlignEn align);
-void mgsDisplayUpdate(void);
 #ifndef MGL_SINGLEDISPLAY
 void mgsDisplay(const MglDisplay* d);
 #endif // MGL_SINGLEDISPLAY
 void mgsBackColor(MglColor color);
-///////////////////////////////////////////////////////////////////////////////////////////
+
+// d - draw
 void mgdFill(MglColor color);
 void mgdFillPattern(const uint8_t* bitmap, const uint8_t pixmod, MglColor color);
 void mgdBitmap(const void* bitmap, const uint8_t bmpsize, const uint8_t width, const uint8_t height, MglColor color);
@@ -106,10 +106,12 @@ void mgdStringLine(const char* str, MglColor color);
 void mgdHex32(uint32_t v, MglColor color);
 void mgdHex16(uint16_t v, MglColor color);
 
-/////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////
+// x - extend
+void mgxUpdate(void);
+void mgxSetZone(uint16_t x, uint16_t y, uint16_t xsize, uint16_t ysize);
+void mgxPixelOut(MglColor color);
+
+// other stuff
 MglColor mgColorRgb(uint8_t red, uint8_t green, uint8_t blue);
 MglColor mgColorHsv(uint8_t hue, uint8_t saturation, uint8_t value);
 MglColor mgAlphablend(uint8_t intensity, MglColor lowest, MglColor highest);
