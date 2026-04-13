@@ -242,9 +242,9 @@ void mgdChar(const char c, MglColor color)
     ASSERTDISP();
     MGL_ASSERT(FONTP);
 #ifndef MGL_CHARSLIMITED
-    if ((c > FONTP->startchar) && (c < FONTP->endchar)) {
+    if ((c >= FONTP->startchar) && (c <= FONTP->endchar)) {
 #else // MGL_CHARSLIMITED
-    MGL_ASSERT((c > FONTP->startchar) && (c < FONTP->endchar));
+    MGL_ASSERT((c >= FONTP->startchar) && (c <= FONTP->endchar));
 #endif // MGL_CHARSLIMITED
         uint8_t charpos = c - FONTP->startchar;
         uint8_t height = FONTP->bmp_height;
